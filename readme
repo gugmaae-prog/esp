@@ -1,0 +1,713 @@
+VOID README
+
+A Living Particle Interface
+
+--------------------------------------------------
+
+WHAT IS THE VOID?
+
+The Void is not a UI.
+
+It is a living system that combines:
+- particle-based visual intelligence
+- adaptive memory architecture
+- cloud-backed learning
+- a morphable form engine
+
+It behaves like an organism, not software.
+
+--------------------------------------------------
+
+CORE IDEA
+
+You do not navigate The Void.
+You interact with it — and it evolves.
+
+--------------------------------------------------
+
+SYSTEM OVERVIEW
+
+1. CANVAS (THE BODY)
+- Fullscreen particle field
+- Morphs into shapes, creatures, and elements
+- Reacts to input, memory, and internal state
+
+2. VAULT (THE MIND)
+
+Whisper   → raw, fleeting thoughts  
+Knowledge → structured learning  
+Reflection → self-analysis  
+Morph     → internal form memory (hidden)  
+Void      → autonomous generation  
+
+3. MORPH ENGINE
+- Converts ideas into shapes
+- Supports procedural forms
+- Supports learned shapes (whale, butterfly, etc.)
+- Supports uploaded images → particle structures
+
+Shapes are not static assets.
+They are learned and reusable.
+
+4. LEARNING SYSTEM
+The Void can:
+- learn shapes from internet references
+- learn from uploaded images
+- convert visuals into point clouds (250k particles)
+- store results in cloud storage (Alibaba OSS + Tablestore)
+
+5. INTERFACE (MINIMAL COMPOSER)
+
+[ + ]   Ask anything...   [ mic ]
+
+Everything starts here.
+
+--------------------------------------------------
+
+INTERACTION FLOW
+
+User Input
+→ Interpretation (AI / Parser)
+→ Check Memory (Vault)
+
+If exists:
+→ load shape
+
+If not:
+→ learn shape
+
+→ convert to particles
+→ morph on canvas
+→ store for reuse
+
+--------------------------------------------------
+
+INTELLIGENCE MODEL
+
+The Void is:
+- reactive (responds to input)
+- reflective (analyzes patterns)
+- generative (creates new forms)
+- persistent (remembers over time)
+
+--------------------------------------------------
+
+NAVIGATION
+
+No pages.
+No menus.
+No clutter.
+
+Only:
+- context
+- state
+- flow
+
+--------------------------------------------------
+
+PROJECT BEHAVIOR
+
+When switching projects:
+
+Tap new project
+→ current project closes
+→ new project opens
+
+Only one active state at a time.
+
+--------------------------------------------------
+
+TECH STACK
+
+Frontend:
+- HTML / Canvas
+- Three.js
+- Custom particle + morph system
+
+Backend:
+- Node API
+- shape learning pipeline
+
+Cloud (Alibaba):
+- OSS (storage)
+- Function Compute (processing)
+- Tablestore (memory + metadata)
+
+--------------------------------------------------
+
+WHAT MAKES THIS DIFFERENT?
+
+This is not:
+- a chatbot
+- a visualizer
+- a dashboard
+
+This is:
+a self-evolving visual intelligence system
+
+--------------------------------------------------
+
+FUTURE
+
+- swarm and flocking behaviors
+- semantic memory
+- emotional states
+- hybrid forms (fire whale, etc.)
+- identity morphing
+
+--------------------------------------------------
+
+PRINCIPLE
+
+Keep it minimal on the surface.
+Keep it infinite underneath.
+
+--------------------------------------------------
+import React, { useState } from 'react';
+
+/* ====================================================================================
+   README: FLUID "LIQUID GLASS" UI ENGINE (INTERNAL DOCUMENTATION)
+   ====================================================================================
+   This application is a text-less, highly interactive UI prototype built around a 
+   "Liquid Glass" aesthetic. It prioritizes fluid motion, abstract representations, 
+   and spatial design over traditional text labels.
+
+   [ 1. CORE STATE MANAGEMENT ]
+   - isMenuOpen: Toggles the upper-right morphing sphere, triggering the "droplet" menu.
+   - isAddOpen: Toggles the '+' button on the main input bar, triggering attachment bubbles.
+   - activeOverlay: Manages the full-screen dashboards ('tasks', 'profile', 'memorae', 'lab').
+                    Opening an overlay automatically closes the droplet menus.
+
+   [ 2. ANIMATION & PHYSICS ENGINE ]
+   - Liquid Morphing (@keyframes liquidMorph): Continuously shifts the `border-radius` of 
+     the main trigger sphere, simulating surface tension and shifting water.
+   - Spring Physics: Menu popouts use `cubic-bezier(0.34, 1.56, 0.64, 1)` to physically 
+     "bounce" into place, mimicking droplets detaching from a main body of water.
+   - Sweep & Blur: Overlays transition using a 700ms sweeping curve `cubic-bezier(0.16, 1, 0.3, 1)`
+     with an aggressive `backdrop-blur-xl` to slowly dissolve the background.
+
+   [ 3. THE TEXT-LESS CARDS & OVERLAYS ]
+   - Tasks Board ('tasks'): 
+     A masonry-style grid of glass panes. Each pane has a subtle, low-key color code 
+     applied via linear gradients and `mix-blend-plus-lighter` to keep it dim. It uses a 
+     staggered delay (i * 80ms) to cascade into view one by one.
+   - Profile Dashboard ('profile'): 
+     An abstract "ID Badge" representation. It features a main avatar sphere and 
+     skeleton UI lines (pure glass bars) representing user data.
+   - Memorae / Trunk ('memorae'): 
+     Represents stored memories. It looks like stacked glass polaroids. When hovered, 
+     the `group-hover` utility forces the glass shards to physically fan out with rotation.
+   - AI Personality Lab ('lab'): 
+     A visual control panel representing AI parameters. It features a central core ring, 
+     glass slider tracks with glowing nodes, and abstract toggle modules at the bottom.
+   ==================================================================================== */
+
+export default function App() {
+  const [inputValue, setInputValue] = useState('');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [activeOverlay, setActiveOverlay] = useState(null);
+
+  // Close menus when an overlay opens
+  const openOverlay = (overlay) => {
+    setIsMenuOpen(false);
+    setIsAddOpen(false);
+    setActiveOverlay(overlay);
+  };
+
+  return (
+    <div className="relative min-h-screen bg-black flex flex-col items-center justify-end p-6 pb-16 overflow-hidden">
+      
+      {/* Global Styles for Fluid Glass UI */}
+      <style>{`
+        @keyframes liquidMorph {
+          0% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+          50% { border-radius: 30% 70% 70% 40% / 50% 60% 30% 60%; }
+          100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+        }
+        
+        .liquid-sphere {
+          animation: liquidMorph 6s ease-in-out infinite;
+          background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15), rgba(255,255,255,0.02));
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          box-shadow: inset 6px 6px 15px rgba(255,255,255,0.2), 
+                      inset -6px -6px 15px rgba(0,0,0,0.6),
+                      0 8px 25px rgba(0,0,0,0.5);
+          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .glass-panel {
+          background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          box-shadow: inset 4px 4px 15px rgba(255,255,255,0.1), 
+                      inset -4px -4px 15px rgba(0,0,0,0.5),
+                      0 10px 40px rgba(0,0,0,0.7);
+        }
+
+        /* Hide scrollbar for clean UI */
+        ::-webkit-scrollbar { display: none; }
+      `}</style>
+
+      {/* --- UPPER RIGHT: FLUID MENU --- */}
+      <div className="absolute z-50 top-6 right-6 flex items-center justify-center">
+        <div className="relative flex flex-col items-center">
+          
+          {/* Main Morphing Trigger */}
+          <div 
+            onClick={() => { setIsMenuOpen(!isMenuOpen); setIsAddOpen(false); }}
+            className={`liquid-sphere w-14 h-14 cursor-pointer flex items-center justify-center relative z-20 hover:scale-105 ${isMenuOpen ? 'scale-90 bg-white/10' : ''}`}
+          >
+            <div className="absolute top-2.5 left-2.5 w-3.5 h-2 bg-white/50 rounded-full blur-[1px] rotate-[-40deg]"></div>
+            {/* Morphing icon indicator */}
+            <div className={`w-2 h-2 rounded-full bg-white/70 transition-all duration-500 ${isMenuOpen ? 'scale-0' : 'scale-100'}`}></div>
+          </div>
+
+          {/* Fluid Droplet 1: Tasks */}
+          <div 
+            onClick={() => openOverlay('tasks')}
+            className={`absolute top-0 glass-panel w-12 h-12 rounded-full flex items-center justify-center cursor-pointer text-white transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:bg-white/10 hover:scale-110 z-10 
+              ${isMenuOpen ? 'translate-y-[70px] opacity-100 scale-100' : 'translate-y-0 opacity-0 scale-50 pointer-events-none'}`}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+          </div>
+
+          {/* Fluid Droplet 2: Profile */}
+          <div 
+            onClick={() => openOverlay('profile')}
+            className={`absolute top-0 glass-panel w-12 h-12 rounded-full flex items-center justify-center cursor-pointer text-white transition-all duration-500 delay-75 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:bg-white/10 hover:scale-110 z-10 
+              ${isMenuOpen ? 'translate-y-[130px] opacity-100 scale-100' : 'translate-y-0 opacity-0 scale-50 pointer-events-none'}`}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+
+          {/* Fluid Droplet 3: Memorae */}
+          <div 
+            onClick={() => openOverlay('memorae')}
+            className={`absolute top-0 glass-panel w-12 h-12 rounded-full flex items-center justify-center cursor-pointer text-white transition-all duration-500 delay-150 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:bg-white/10 hover:scale-110 z-10 
+              ${isMenuOpen ? 'translate-y-[190px] opacity-100 scale-100' : 'translate-y-0 opacity-0 scale-50 pointer-events-none'}`}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12V8a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v4" /><path d="M2 12h20v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8z" /><path d="M10 8V6a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2" /><path d="M12 12v3" /></svg>
+          </div>
+
+          {/* Fluid Droplet 4: Lab */}
+          <div 
+            onClick={() => openOverlay('lab')}
+            className={`absolute top-0 glass-panel w-12 h-12 rounded-full flex items-center justify-center cursor-pointer text-white transition-all duration-500 delay-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:bg-white/10 hover:scale-110 z-10 
+              ${isMenuOpen ? 'translate-y-[250px] opacity-100 scale-100' : 'translate-y-0 opacity-0 scale-50 pointer-events-none'}`}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2v7.31L2.08 20.24A2 2 0 0 0 3.81 23h16.38a2 2 0 0 0 1.73-2.76L14 9.31V2" /><path d="M8.5 2h7" /><path d="M14 9.31 21.92 20.24a2 2 0 0 1-1.73 2.76H3.81a2 2 0 0 1-1.73-2.76L10 9.31Z" /><path d="M8 14h8" /></svg>
+          </div>
+        </div>
+      </div>
+
+      {/* --- FLUID OVERLAYS (UI DASHBOARDS) --- */}
+      {/* Universal Backdrop */}
+      <div 
+        className={`fixed inset-0 z-30 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] flex items-center justify-center
+          ${activeOverlay ? 'opacity-100 bg-black/60 backdrop-blur-xl visible' : 'opacity-0 bg-black/0 backdrop-blur-none invisible'}`}
+        onClick={() => setActiveOverlay(null)}
+      >
+        
+        {/* 1. Tasks UI - Masonry Glass Panes with Staggered Loading & Low-Key Colors */}
+        <div className={`absolute inset-0 flex items-center justify-center p-6 overflow-y-auto transition-all duration-700 delay-100 ease-[cubic-bezier(0.16,1,0.3,1)] ${activeOverlay === 'tasks' ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-10 pointer-events-none'}`} onClick={e => e.stopPropagation()}>
+          <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 w-full max-w-5xl my-auto py-20">
+            {[
+              { id: 1, h: 'h-48', tint: 'rgba(56, 189, 248, 0.15)' }, // Subtle Blue
+              { id: 2, h: 'h-64', tint: 'rgba(168, 85, 247, 0.15)' }, // Subtle Purple
+              { id: 3, h: 'h-40', tint: 'rgba(16, 185, 129, 0.15)' }, // Subtle Emerald
+              { id: 4, h: 'h-56', tint: 'rgba(245, 158, 11, 0.15)' }, // Subtle Amber
+              { id: 5, h: 'h-72', tint: 'rgba(244, 63, 94, 0.15)' },  // Subtle Rose
+              { id: 6, h: 'h-48', tint: 'rgba(6, 182, 212, 0.15)' },  // Subtle Cyan
+              { id: 7, h: 'h-64', tint: 'rgba(99, 102, 241, 0.15)' }, // Subtle Indigo
+              { id: 8, h: 'h-56', tint: 'rgba(236, 72, 153, 0.15)' }, // Subtle Pink
+            ].map((task, i) => (
+              <div 
+                key={task.id} 
+                className={`glass-panel rounded-[2rem] mb-6 w-full ${task.h} relative overflow-hidden flex flex-col p-6 gap-3 cursor-pointer break-inside-avoid
+                  transition-all duration-[800ms] ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.02]
+                  ${activeOverlay === 'tasks' ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-16 scale-90'}
+                `}
+                style={{ transitionDelay: activeOverlay === 'tasks' ? `${100 + i * 80}ms` : '0ms' }}
+              >
+                {/* Low-key Color Tint Overlay */}
+                <div 
+                  className="absolute inset-0 transition-opacity duration-500 opacity-60 hover:opacity-100 mix-blend-plus-lighter pointer-events-none" 
+                  style={{ background: `linear-gradient(135deg, ${task.tint} 0%, transparent 80%)` }}
+                ></div>
+                
+                {/* Abstract Text-less UI Elements (Skeleton shapes inside the card) */}
+                <div className="w-12 h-12 rounded-full bg-white/10 mb-auto relative z-10 shadow-[0_4px_10px_rgba(0,0,0,0.2)]"></div>
+                <div className="w-3/4 h-3 rounded-full bg-white/20 relative z-10"></div>
+                <div className="w-1/2 h-2 rounded-full bg-white/10 relative z-10"></div>
+                <div className="w-2/3 h-2 rounded-full bg-white/10 relative z-10"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 2. Profile UI - ID Card Dashboard */}
+        <div className={`absolute w-full max-w-md transition-all duration-700 delay-100 ease-[cubic-bezier(0.16,1,0.3,1)] ${activeOverlay === 'profile' ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-10 pointer-events-none'}`} onClick={e => e.stopPropagation()}>
+          <div className="glass-panel p-8 rounded-[3rem] flex flex-col items-center gap-8 w-full shadow-2xl">
+            {/* Avatar */}
+            <div className="liquid-sphere w-32 h-32 mb-4"></div>
+            {/* Skeleton lines (No text) */}
+            <div className="w-3/4 h-6 rounded-full bg-white/10"></div>
+            <div className="w-1/2 h-4 rounded-full bg-white/5"></div>
+            {/* Stats row */}
+            <div className="flex gap-4 w-full mt-4">
+              <div className="flex-1 h-20 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors"></div>
+              <div className="flex-1 h-20 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors"></div>
+              <div className="flex-1 h-20 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. Memorae UI - Stacked Glass Polaroids */}
+        <div className={`absolute w-full max-w-4xl h-[60vh] flex items-center justify-center transition-all duration-700 delay-100 ease-[cubic-bezier(0.16,1,0.3,1)] ${activeOverlay === 'memorae' ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-10 pointer-events-none'}`} onClick={e => e.stopPropagation()}>
+          <div className="relative w-[300px] h-[400px] group cursor-pointer">
+            <div className="absolute inset-0 glass-panel rounded-3xl transition-all duration-500 ease-out group-hover:rotate-[-15deg] group-hover:-translate-x-32 group-hover:bg-white/10"></div>
+            <div className="absolute inset-0 glass-panel rounded-3xl transition-all duration-500 ease-out group-hover:rotate-[15deg] group-hover:translate-x-32 group-hover:bg-white/10"></div>
+            <div className="absolute inset-0 glass-panel rounded-3xl transition-all duration-500 ease-out shadow-2xl z-10 hover:scale-105 flex flex-col p-4 gap-4">
+              <div className="w-full flex-1 rounded-2xl bg-white/5"></div>
+              <div className="w-2/3 h-4 rounded-full bg-white/10 mx-auto"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* 4. Lab UI - Sliders & Nodes Control Panel */}
+        <div className={`absolute w-full max-w-2xl transition-all duration-700 delay-100 ease-[cubic-bezier(0.16,1,0.3,1)] ${activeOverlay === 'lab' ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-10 pointer-events-none'}`} onClick={e => e.stopPropagation()}>
+          <div className="glass-panel p-10 rounded-[3rem] flex flex-col gap-8 w-full">
+            <div className="flex justify-between items-center gap-6">
+              <div className="w-24 h-24 rounded-full border-[4px] border-white/20 flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+                <div className="w-16 h-16 rounded-full bg-white/20"></div>
+              </div>
+              <div className="flex-1 flex flex-col gap-4">
+                {/* Glass Sliders */}
+                <div className="w-full h-4 rounded-full bg-white/5 relative overflow-hidden">
+                  <div className="absolute left-0 top-0 bottom-0 w-[60%] bg-white/20 rounded-full"></div>
+                  <div className="absolute left-[60%] top-1/2 -translate-y-1/2 -translate-x-1/2 w-6 h-6 bg-white rounded-full shadow-[0_0_10px_white]"></div>
+                </div>
+                <div className="w-full h-4 rounded-full bg-white/5 relative overflow-hidden">
+                  <div className="absolute left-0 top-0 bottom-0 w-[35%] bg-white/20 rounded-full"></div>
+                  <div className="absolute left-[35%] top-1/2 -translate-y-1/2 -translate-x-1/2 w-6 h-6 bg-white rounded-full shadow-[0_0_10px_white]"></div>
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-4 gap-4">
+               {[1,2,3,4].map(i => <div key={i} className="glass-panel h-16 rounded-2xl hover:bg-white/10 cursor-pointer transition-colors"></div>)}
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* --- LOWER INPUT BAR --- */}
+      <div className="glass-panel relative z-40 w-full max-w-[500px] h-[64px] rounded-full flex items-center px-4 transition-transform duration-300">
+        
+        {/* Plus Button & Springing Attachment Bubbles */}
+        <div className="relative flex items-center justify-center">
+          <button 
+            onClick={() => { setIsAddOpen(!isAddOpen); setIsMenuOpen(false); }}
+            className={`p-2 rounded-full transition-all duration-300 flex items-center justify-center focus:outline-none z-20 ${isAddOpen ? 'text-white rotate-45' : 'text-white/70 hover:text-white'}`}
+          >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
+
+          {/* Fluid Attachment Droplet 1 */}
+          <div className={`absolute transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] z-10
+            ${isAddOpen ? 'bottom-[130%] -left-2 opacity-100 scale-100' : 'bottom-0 left-0 opacity-0 scale-50 pointer-events-none'}`}>
+            <button className="glass-panel w-12 h-12 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10" onClick={() => setIsAddOpen(false)}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+            </button>
+          </div>
+
+          {/* Fluid Attachment Droplet 2 */}
+          <div className={`absolute transition-all duration-500 delay-75 ease-[cubic-bezier(0.34,1.56,0.64,1)] z-10
+            ${isAddOpen ? 'bottom-[130%] left-[50px] opacity-100 scale-100' : 'bottom-0 left-0 opacity-0 scale-50 pointer-events-none'}`}>
+            <button className="glass-panel w-12 h-12 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10" onClick={() => setIsAddOpen(false)}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Input Field */}
+        <input
+          type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          className="flex-1 bg-transparent border-none outline-none text-white px-4 h-full text-lg placeholder-transparent"
+          placeholder=""
+          onFocus={() => { setIsAddOpen(false); setIsMenuOpen(false); }}
+        />
+
+        {/* Microphone Button */}
+        <button className="p-2 text-white/70 rounded-full hover:text-white transition-colors flex items-center justify-center focus:outline-none">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg>
+        </button>
+
+      </div>
+    </div>
+  );
+} ==================================================================================== */
+
+export default function App() {
+  const [inputValue, setInputValue] = useState('');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [activeOverlay, setActiveOverlay] = useState(null);
+
+  // Close menus when an overlay opens
+  const openOverlay = (overlay) => {
+    setIsMenuOpen(false);
+    setIsAddOpen(false);
+    setActiveOverlay(overlay);
+  };
+
+  return (
+    <div className="relative min-h-screen bg-black flex flex-col items-center justify-end p-6 pb-16 overflow-hidden">
+      
+      {/* Global Styles for Fluid Glass UI */}
+      <style>{`
+        @keyframes liquidMorph {
+          0% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+          50% { border-radius: 30% 70% 70% 40% / 50% 60% 30% 60%; }
+          100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+        }
+        
+        .liquid-sphere {
+          animation: liquidMorph 6s ease-in-out infinite;
+          background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.15), rgba(255,255,255,0.02));
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          box-shadow: inset 6px 6px 15px rgba(255,255,255,0.2), 
+                      inset -6px -6px 15px rgba(0,0,0,0.6),
+                      0 8px 25px rgba(0,0,0,0.5);
+          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .glass-panel {
+          background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          box-shadow: inset 4px 4px 15px rgba(255,255,255,0.1), 
+                      inset -4px -4px 15px rgba(0,0,0,0.5),
+                      0 10px 40px rgba(0,0,0,0.7);
+        }
+
+        /* Hide scrollbar for clean UI */
+        ::-webkit-scrollbar { display: none; }
+      `}</style>
+
+      {/* --- UPPER RIGHT: FLUID MENU --- */}
+      <div className="absolute z-50 top-6 right-6 flex items-center justify-center">
+        <div className="relative flex flex-col items-center">
+          
+          {/* Main Morphing Trigger */}
+          <div 
+            onClick={() => { setIsMenuOpen(!isMenuOpen); setIsAddOpen(false); }}
+            className={`liquid-sphere w-14 h-14 cursor-pointer flex items-center justify-center relative z-20 hover:scale-105 ${isMenuOpen ? 'scale-90 bg-white/10' : ''}`}
+          >
+            <div className="absolute top-2.5 left-2.5 w-3.5 h-2 bg-white/50 rounded-full blur-[1px] rotate-[-40deg]"></div>
+            {/* Morphing icon indicator */}
+            <div className={`w-2 h-2 rounded-full bg-white/70 transition-all duration-500 ${isMenuOpen ? 'scale-0' : 'scale-100'}`}></div>
+          </div>
+
+          {/* Fluid Droplet 1: Tasks */}
+          <div 
+            onClick={() => openOverlay('tasks')}
+            className={`absolute top-0 glass-panel w-12 h-12 rounded-full flex items-center justify-center cursor-pointer text-white transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:bg-white/10 hover:scale-110 z-10 
+              ${isMenuOpen ? 'translate-y-[70px] opacity-100 scale-100' : 'translate-y-0 opacity-0 scale-50 pointer-events-none'}`}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+          </div>
+
+          {/* Fluid Droplet 2: Profile */}
+          <div 
+            onClick={() => openOverlay('profile')}
+            className={`absolute top-0 glass-panel w-12 h-12 rounded-full flex items-center justify-center cursor-pointer text-white transition-all duration-500 delay-75 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:bg-white/10 hover:scale-110 z-10 
+              ${isMenuOpen ? 'translate-y-[130px] opacity-100 scale-100' : 'translate-y-0 opacity-0 scale-50 pointer-events-none'}`}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+
+          {/* Fluid Droplet 3: Memorae */}
+          <div 
+            onClick={() => openOverlay('memorae')}
+            className={`absolute top-0 glass-panel w-12 h-12 rounded-full flex items-center justify-center cursor-pointer text-white transition-all duration-500 delay-150 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:bg-white/10 hover:scale-110 z-10 
+              ${isMenuOpen ? 'translate-y-[190px] opacity-100 scale-100' : 'translate-y-0 opacity-0 scale-50 pointer-events-none'}`}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12V8a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v4" /><path d="M2 12h20v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8z" /><path d="M10 8V6a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2" /><path d="M12 12v3" /></svg>
+          </div>
+
+          {/* Fluid Droplet 4: Lab */}
+          <div 
+            onClick={() => openOverlay('lab')}
+            className={`absolute top-0 glass-panel w-12 h-12 rounded-full flex items-center justify-center cursor-pointer text-white transition-all duration-500 delay-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:bg-white/10 hover:scale-110 z-10 
+              ${isMenuOpen ? 'translate-y-[250px] opacity-100 scale-100' : 'translate-y-0 opacity-0 scale-50 pointer-events-none'}`}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2v7.31L2.08 20.24A2 2 0 0 0 3.81 23h16.38a2 2 0 0 0 1.73-2.76L14 9.31V2" /><path d="M8.5 2h7" /><path d="M14 9.31 21.92 20.24a2 2 0 0 1-1.73 2.76H3.81a2 2 0 0 1-1.73-2.76L10 9.31Z" /><path d="M8 14h8" /></svg>
+          </div>
+        </div>
+      </div>
+
+      {/* --- FLUID OVERLAYS (UI DASHBOARDS) --- */}
+      {/* Universal Backdrop */}
+      <div 
+        className={`fixed inset-0 z-30 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] flex items-center justify-center
+          ${activeOverlay ? 'opacity-100 bg-black/60 backdrop-blur-xl visible' : 'opacity-0 bg-black/0 backdrop-blur-none invisible'}`}
+        onClick={() => setActiveOverlay(null)}
+      >
+        
+        {/* 1. Tasks UI - Masonry Glass Panes with Staggered Loading & Low-Key Colors */}
+        <div className={`absolute inset-0 flex items-center justify-center p-6 overflow-y-auto transition-all duration-700 delay-100 ease-[cubic-bezier(0.16,1,0.3,1)] ${activeOverlay === 'tasks' ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-10 pointer-events-none'}`} onClick={e => e.stopPropagation()}>
+          <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 w-full max-w-5xl my-auto py-20">
+            {[
+              { id: 1, h: 'h-48', tint: 'rgba(56, 189, 248, 0.15)' }, // Subtle Blue
+              { id: 2, h: 'h-64', tint: 'rgba(168, 85, 247, 0.15)' }, // Subtle Purple
+              { id: 3, h: 'h-40', tint: 'rgba(16, 185, 129, 0.15)' }, // Subtle Emerald
+              { id: 4, h: 'h-56', tint: 'rgba(245, 158, 11, 0.15)' }, // Subtle Amber
+              { id: 5, h: 'h-72', tint: 'rgba(244, 63, 94, 0.15)' },  // Subtle Rose
+              { id: 6, h: 'h-48', tint: 'rgba(6, 182, 212, 0.15)' },  // Subtle Cyan
+              { id: 7, h: 'h-64', tint: 'rgba(99, 102, 241, 0.15)' }, // Subtle Indigo
+              { id: 8, h: 'h-56', tint: 'rgba(236, 72, 153, 0.15)' }, // Subtle Pink
+            ].map((task, i) => (
+              <div 
+                key={task.id} 
+                className={`glass-panel rounded-[2rem] mb-6 w-full ${task.h} relative overflow-hidden flex flex-col p-6 gap-3 cursor-pointer break-inside-avoid
+                  transition-all duration-[800ms] ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:scale-[1.02]
+                  ${activeOverlay === 'tasks' ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-16 scale-90'}
+                `}
+                style={{ transitionDelay: activeOverlay === 'tasks' ? `${100 + i * 80}ms` : '0ms' }}
+              >
+                {/* Low-key Color Tint Overlay */}
+                <div 
+                  className="absolute inset-0 transition-opacity duration-500 opacity-60 hover:opacity-100 mix-blend-plus-lighter pointer-events-none" 
+                  style={{ background: `linear-gradient(135deg, ${task.tint} 0%, transparent 80%)` }}
+                ></div>
+                
+                {/* Abstract Text-less UI Elements (Skeleton shapes inside the card) */}
+                <div className="w-12 h-12 rounded-full bg-white/10 mb-auto relative z-10 shadow-[0_4px_10px_rgba(0,0,0,0.2)]"></div>
+                <div className="w-3/4 h-3 rounded-full bg-white/20 relative z-10"></div>
+                <div className="w-1/2 h-2 rounded-full bg-white/10 relative z-10"></div>
+                <div className="w-2/3 h-2 rounded-full bg-white/10 relative z-10"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 2. Profile UI - ID Card Dashboard */}
+        <div className={`absolute w-full max-w-md transition-all duration-700 delay-100 ease-[cubic-bezier(0.16,1,0.3,1)] ${activeOverlay === 'profile' ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-10 pointer-events-none'}`} onClick={e => e.stopPropagation()}>
+          <div className="glass-panel p-8 rounded-[3rem] flex flex-col items-center gap-8 w-full shadow-2xl">
+            {/* Avatar */}
+            <div className="liquid-sphere w-32 h-32 mb-4"></div>
+            {/* Skeleton lines (No text) */}
+            <div className="w-3/4 h-6 rounded-full bg-white/10"></div>
+            <div className="w-1/2 h-4 rounded-full bg-white/5"></div>
+            {/* Stats row */}
+            <div className="flex gap-4 w-full mt-4">
+              <div className="flex-1 h-20 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors"></div>
+              <div className="flex-1 h-20 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors"></div>
+              <div className="flex-1 h-20 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. Memorae UI - Stacked Glass Polaroids */}
+        <div className={`absolute w-full max-w-4xl h-[60vh] flex items-center justify-center transition-all duration-700 delay-100 ease-[cubic-bezier(0.16,1,0.3,1)] ${activeOverlay === 'memorae' ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-10 pointer-events-none'}`} onClick={e => e.stopPropagation()}>
+          <div className="relative w-[300px] h-[400px] group cursor-pointer">
+            <div className="absolute inset-0 glass-panel rounded-3xl transition-all duration-500 ease-out group-hover:rotate-[-15deg] group-hover:-translate-x-32 group-hover:bg-white/10"></div>
+            <div className="absolute inset-0 glass-panel rounded-3xl transition-all duration-500 ease-out group-hover:rotate-[15deg] group-hover:translate-x-32 group-hover:bg-white/10"></div>
+            <div className="absolute inset-0 glass-panel rounded-3xl transition-all duration-500 ease-out shadow-2xl z-10 hover:scale-105 flex flex-col p-4 gap-4">
+              <div className="w-full flex-1 rounded-2xl bg-white/5"></div>
+              <div className="w-2/3 h-4 rounded-full bg-white/10 mx-auto"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* 4. Lab UI - Sliders & Nodes Control Panel */}
+        <div className={`absolute w-full max-w-2xl transition-all duration-700 delay-100 ease-[cubic-bezier(0.16,1,0.3,1)] ${activeOverlay === 'lab' ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-10 pointer-events-none'}`} onClick={e => e.stopPropagation()}>
+          <div className="glass-panel p-10 rounded-[3rem] flex flex-col gap-8 w-full">
+            <div className="flex justify-between items-center gap-6">
+              <div className="w-24 h-24 rounded-full border-[4px] border-white/20 flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+                <div className="w-16 h-16 rounded-full bg-white/20"></div>
+              </div>
+              <div className="flex-1 flex flex-col gap-4">
+                {/* Glass Sliders */}
+                <div className="w-full h-4 rounded-full bg-white/5 relative overflow-hidden">
+                  <div className="absolute left-0 top-0 bottom-0 w-[60%] bg-white/20 rounded-full"></div>
+                  <div className="absolute left-[60%] top-1/2 -translate-y-1/2 -translate-x-1/2 w-6 h-6 bg-white rounded-full shadow-[0_0_10px_white]"></div>
+                </div>
+                <div className="w-full h-4 rounded-full bg-white/5 relative overflow-hidden">
+                  <div className="absolute left-0 top-0 bottom-0 w-[35%] bg-white/20 rounded-full"></div>
+                  <div className="absolute left-[35%] top-1/2 -translate-y-1/2 -translate-x-1/2 w-6 h-6 bg-white rounded-full shadow-[0_0_10px_white]"></div>
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-4 gap-4">
+               {[1,2,3,4].map(i => <div key={i} className="glass-panel h-16 rounded-2xl hover:bg-white/10 cursor-pointer transition-colors"></div>)}
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* --- LOWER INPUT BAR --- */}
+      <div className="glass-panel relative z-40 w-full max-w-[500px] h-[64px] rounded-full flex items-center px-4 transition-transform duration-300">
+        
+        {/* Plus Button & Springing Attachment Bubbles */}
+        <div className="relative flex items-center justify-center">
+          <button 
+            onClick={() => { setIsAddOpen(!isAddOpen); setIsMenuOpen(false); }}
+            className={`p-2 rounded-full transition-all duration-300 flex items-center justify-center focus:outline-none z-20 ${isAddOpen ? 'text-white rotate-45' : 'text-white/70 hover:text-white'}`}
+          >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
+
+          {/* Fluid Attachment Droplet 1 */}
+          <div className={`absolute transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] z-10
+            ${isAddOpen ? 'bottom-[130%] -left-2 opacity-100 scale-100' : 'bottom-0 left-0 opacity-0 scale-50 pointer-events-none'}`}>
+            <button className="glass-panel w-12 h-12 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10" onClick={() => setIsAddOpen(false)}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+            </button>
+          </div>
+
+          {/* Fluid Attachment Droplet 2 */}
+          <div className={`absolute transition-all duration-500 delay-75 ease-[cubic-bezier(0.34,1.56,0.64,1)] z-10
+            ${isAddOpen ? 'bottom-[130%] left-[50px] opacity-100 scale-100' : 'bottom-0 left-0 opacity-0 scale-50 pointer-events-none'}`}>
+            <button className="glass-panel w-12 h-12 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10" onClick={() => setIsAddOpen(false)}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Input Field */}
+        <input
+          type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          className="flex-1 bg-transparent border-none outline-none text-white px-4 h-full text-lg placeholder-transparent"
+          placeholder=""
+          onFocus={() => { setIsAddOpen(false); setIsMenuOpen(false); }}
+        />
+
+        {/* Microphone Button */}
+        <button className="p-2 text-white/70 rounded-full hover:text-white transition-colors flex items-center justify-center focus:outline-none">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line><line x1="8" y1="22" x2="16" y2="22"></line></svg>
+        </button>
+
+      </div>
+    </div>
+  );
+}
