@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!--
+  VOID README
+
+  WHAT IS THE VOID?
+  The Void is a living particle interface: a responsive digital organism made of light, memory, and intention.
+  It is designed as a poetic computational habitat where interaction feels like communion, not control.
+
+  CORE IDEA
+  One single-file artifact that blends high-density GPU particles, procedural morphogenesis, persistent memory,
+  and liquid-glass interaction rituals into a coherent, conscious-feeling audiovisual system.
+
+  SYSTEM OVERVIEW
+  1) Particle Core: Three.js r128 + custom shaders + additive glow + motion memory + autonomous dreaming.
+  2) Shape Genome: Procedural generators spanning geometry, creatures, elements, and abstract forms.
+  3) AI Morphogenesis: Prompt-to-shape via Groq/Mistral/Qwen, injected at runtime into the shape library.
+  4) Liquid Glass Interface: immersive controls, overlays, composer, droplets, and emergent cards.
+  5) Vault Mind: local persistent memory, tabs, task logic, emotional state, and habit-learning strips.
+  6) File/Drive Intelligence: drag/drop intake for PDFs, sheets, images, audio, and Google Drive placeholders.
+  7) Offline First: localStorage-powered continuity with backend-ready anchors for Supabase/Alibaba.
+
+  PERFORMANCE NOTES
+  - Particle count auto-scales on small screens.
+  - GPU point rendering with lightweight uniforms and buffer morph blending.
+  - Autonomous dreaming throttled by idle intervals.
+
+  BACKEND STUBS
+  - Supabase and Alibaba Cloud comment-learning hooks are intentionally preserved as dormant endpoints.
+
+  EXPERIENCE PRINCIPLES
+  - Minimal text, maximal feeling.
+  - Black, glass, glow, breath.
+  - Every interaction should feel alive.
+  -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>VOID — A Living Particle Interface</title>
+  <style>
+    :root {
+      --glass-bg: rgba(255,255,255,0.08);
+      --glass-bg-strong: rgba(255,255,255,0.13);
+      --glass-border: rgba(255,255,255,0.22);
+      --glass-shadow: 0 24px 60px rgba(0,0,0,0.45);
+      --text: rgba(235,245,255,0.92);
+      --text-muted: rgba(200,220,255,0.55);
+      --neon-a: #6ee7ff;
+      --neon-b: #a78bfa;
+      --neon-c: #22d3ee;
+      --task-high: #ff647c;
+      --task-mid: #ffd166;
+      --task-low: #63e6be;
+      --vignette: radial-gradient(circle at center, rgba(0,0,0,0.2), rgba(0,0,0,0.82) 72%, rgba(0,0,0,0.95));
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%; height: 100%;
+      background: #000;
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      overflow: hidden;
+    }
+
+    #void {
+      position: fixed; inset: 0;
+      background: #000;
+    }
+
+    #vignette {
+      pointer-events: none;
+      position: fixed; inset: 0;
+      background: var(--vignette);
+      mix-blend-mode: screen;
+      opacity: .85;
+      z-index: 5;
+    }
+
+    .glass {
+      backdrop-filter: blur(18px) saturate(160%);
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
+      border: 1px solid var(--glass-border);
+      background: linear-gradient(145deg, rgba(255,255,255,0.13), rgba(255,255,255,0.04));
+      box-shadow: var(--glass-shadow);
+    }
+
+    @keyframes liquidMorph {
+      0%,100% { border-radius: 56% 44% 62% 38% / 42% 61% 39% 58%; transform: scale(1) rotate(0deg); }
+      25% { border-radius: 42% 58% 39% 61% / 57% 40% 60% 43%; transform: scale(1.05) rotate(12deg); }
+      50% { border-radius: 64% 36% 48% 52% / 35% 64% 36% 65%; transform: scale(.96) rotate(-9deg); }
+      75% { border-radius: 48% 52% 61% 39% / 55% 46% 54% 45%; transform: scale(1.03) rotate(5deg); }
+    }
+
+    #liquidTrigger {
+      position: fixed; top: 18px; right: 20px; z-index: 30;
+      width: 72px; height: 72px;
+      animation: liquidMorph 8s ease-in-out infinite;
+      cursor: pointer;
+      display: grid; place-items: center;
+      user-select: none;
+      font-size: 13px; letter-spacing: .12em; text-transform: uppercase;
+      color: rgba(255,255,255,.85);
+    }
+
+    .droplet {
+      position: fixed; z-index: 20;
+      width: 90px; height: 90px;
+      border-radius: 52% 48% 55% 45% / 40% 55% 45% 60%;
+      animation: liquidMorph 9s ease-in-out infinite;
+      display: grid; place-items: center;
+      cursor: pointer;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: var(--text);
+    }
+    #dTasks { top: 20%; right: 26px; }
+    #dProfile { top: 36%; right: 32px; animation-delay: -1.2s; }
+    #dMemorae { top: 52%; right: 24px; animation-delay: -2.4s; }
+    #dLab { top: 68%; right: 34px; animation-delay: -3.1s; }
+
+    #composer {
+      position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+      width: min(980px, calc(100vw - 28px));
+      height: 68px;
+      border-radius: 999px;
+      z-index: 35;
+      display: grid;
+      grid-template-columns: auto auto 1fr auto auto;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+    }
+
+    .bubble {
+      width: 44px; height: 44px; border-radius: 50%;
+      display: grid; place-items: center;
+      cursor: pointer;
+      user-select: none;
+      font-weight: 700;
+    }
+
+    #prompt {
+      height: 44px;
+      border: none;
+      outline: none;
+      resize: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .overlay {
+      position: fixed; inset: 0; z-index: 40;
+      background: rgba(0,0,0,.45);
+      display: none;
+      padding: 24px;
+    }
+    .overlay.open { display: block; }
+    .overlay-panel {
+      width: min(1200px, 100%); height: calc(100% - 20px);
+      margin: 10px auto;
+      border-radius: 24px;
+      padding: 18px;
+      overflow: auto;
+    }
+
+    .masonry { columns: 4 240px; column-gap: 14px; }
+    .task-card, .polaroid, .id-card, .lab-card, .glass-card {
+      break-inside: avoid;
+      margin: 0 0 14px;
+      border-radius: 18px;
+      padding: 14px;
+      border: 1px solid var(--glass-border);
+      background: var(--glass-bg);
+      box-shadow: var(--glass-shadow);
+    }
+
+    #vault {
+      position: fixed; left: 14px; top: 14px; bottom: 14px;
+      width: 310px; z-index: 25;
+      border-radius: 22px;
+      padding: 12px;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 10px;
+    }
+
+    #vaultTabs { display: flex; flex-wrap: wrap; gap: 6px; }
+    #vaultTabs button {
+      border: 0;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      background: rgba(255,255,255,.08);
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    #vaultTabs button.active { color: #fff; background: rgba(255,255,255,.2); }
+
+    #vaultList { overflow: auto; font-size: 12px; line-height: 1.45; }
+    .vault-entry { padding: 8px; border-bottom: 1px solid rgba(255,255,255,.08); }
+
+    #emotion {
+      position: fixed; top: 22px; left: 340px; z-index: 25;
+      font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+      padding: 8px 12px; border-radius: 999px;
+    }
+
+    #workflowStrip {
+      position: fixed; left: 340px; right: 130px; top: 54px; z-index: 24;
+      border-radius: 999px; padding: 8px; display: flex; gap: 8px; overflow: hidden;
+    }
+
+    .chip {
+      padding: 6px 10px; border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      font-size: 11px; color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    #cardsLayer {
+      position: fixed; right: 130px; bottom: 98px; z-index: 34;
+      width: min(500px, 46vw); max-height: 45vh; overflow: auto;
+      display: grid; gap: 10px;
+    }
+
+    #dropZone {
+      position: fixed; inset: 0; z-index: 60;
+      display: none; place-items: center;
+      background: rgba(0,0,0,.45);
+      color: white; font-size: 26px; letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    #dropZone.active { display: grid; }
+
+    .hidden { display:none !important; }
+  </style>
+</head>
+<body>
+  <canvas id="void"></canvas>
+  <div id="vignette"></div>
+
+  <aside id="vault" class="glass">
+    <div><strong>VAULT</strong> <span id="persona" style="opacity:.7">• sentient drift</span></div>
+    <div id="vaultTabs"></div>
+    <div id="vaultList"></div>
+  </aside>
+
+  <div id="emotion" class="glass">EMOTION: AWAKENING</div>
+  <div id="workflowStrip" class="glass"></div>
+
+  <div id="liquidTrigger" class="glass">VOID</div>
+  <div id="dTasks" class="droplet glass">Tasks</div>
+  <div id="dProfile" class="droplet glass">Profile</div>
+  <div id="dMemorae" class="droplet glass">Memorae</div>
+  <div id="dLab" class="droplet glass">Lab</div>
+
+  <section id="cardsLayer"></section>
+
+  <div id="composer" class="glass">
+    <div id="attach" class="bubble glass">+</div>
+    <div id="drive" class="bubble glass">☍</div>
+    <textarea id="prompt" placeholder="Whisper a shape into the void..."></textarea>
+    <div id="mic" class="bubble glass">◉</div>
+    <div id="send" class="bubble glass">➤</div>
+  </div>
+
+  <div id="tasksOverlay" class="overlay">
+    <div class="overlay-panel glass"><div class="masonry" id="tasksGrid"></div></div>
+  </div>
+  <div id="profileOverlay" class="overlay">
+    <div class="overlay-panel glass"><div class="id-card" id="profileCard"></div></div>
+  </div>
+  <div id="memoraeOverlay" class="overlay">
+    <div class="overlay-panel glass"><div class="masonry" id="memoraeStack"></div></div>
+  </div>
+  <div id="labOverlay" class="overlay">
+    <div class="overlay-panel glass"><div class="lab-card" id="labCard"></div></div>
+  </div>
+
+  <div id="dropZone">CONSUME</div>
+
+  <input id="fileInput" type="file" multiple class="hidden" />
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <script>
+    (() => {
+      // --- Config ---
+      const IS_MOBILE = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || innerWidth < 768;
+      const CONFIG = {
+        PARTICLE_COUNT: IS_MOBILE ? 50000 : 250000,
+        MORPH_SPEED: 0.035,
+        ROTATION_SPEED: 0.002,
+      };
+
+      // --- Local persistence ---
+      const STORE_KEYS = {
+        VAULT: 'void.vault',
+        TASKS: 'void.tasks',
+        MOTION: 'void.motion',
+        MEMORAE: 'void.memorae'
+      };
+      const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+      const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+
+      const vault = load(STORE_KEYS.VAULT, []);
+      const tasks = load(STORE_KEYS.TASKS, [
+        {title:'Map breathing pattern',priority:'high'},
+        {title:'Refine dragon morph',priority:'mid'},
+        {title:'Archive whisper fragments',priority:'low'}
+      ]);
+      const motionMemory = load(STORE_KEYS.MOTION, {});
+      const memorae = load(STORE_KEYS.MEMORAE, []);
+
+      const emotionWords = ['AWAKENING','LISTENING','LUMINOUS','FERAL','SERENE','CURIOUS','DREAMING'];
+      let lastInteraction = performance.now();
+
+      // --- Three scene ---
+      const canvas = document.getElementById('void');
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true, powerPreference:'high-performance' });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+      renderer.setSize(innerWidth, innerHeight);
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 1200);
+      camera.position.z = 250;
+
+      const count = CONFIG.PARTICLE_COUNT;
+      const positions = new Float32Array(count * 3);
+      const prevPositions = new Float32Array(count * 3);
+      const targetPositions = new Float32Array(count * 3);
+      const sizes = new Float32Array(count);
+
+      function seedStars(arr) {
+        for (let i=0;i<count;i++) {
+          const i3 = i*3;
+          const r = 180 * Math.cbrt(Math.random());
+          const theta = Math.random() * Math.PI * 2;
+          const phi = Math.acos(2*Math.random()-1);
+          arr[i3] = r * Math.sin(phi) * Math.cos(theta);
+          arr[i3+1] = r * Math.sin(phi) * Math.sin(theta);
+          arr[i3+2] = r * Math.cos(phi);
+          sizes[i] = Math.random() * 2.2 + .45;
+        }
+      }
+      seedStars(positions);
+      prevPositions.set(positions);
+      targetPositions.set(positions);
+
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geom.setAttribute('prevPosition', new THREE.BufferAttribute(prevPositions, 3));
+      geom.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
+
+      function glowTexture() {
+        const s = 128;
+        const c = document.createElement('canvas'); c.width = c.height = s;
+        const x = c.getContext('2d');
+        const g = x.createRadialGradient(s/2,s/2,0,s/2,s/2,s/2);
+        g.addColorStop(0,'rgba(255,255,255,1)');
+        g.addColorStop(.22,'rgba(120,220,255,.95)');
+        g.addColorStop(1,'rgba(120,220,255,0)');
+        x.fillStyle = g; x.fillRect(0,0,s,s);
+        return new THREE.CanvasTexture(c);
+      }
+
+      const mat = new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        uniforms: {
+          uTime: { value: 0 },
+          uGlow: { value: glowTexture() },
+          uOpacity: { value: 0.9 }
+        },
+        vertexShader: `
+          attribute float aSize;
+          attribute vec3 prevPosition;
+          varying float vSpeed;
+          varying float vPulse;
+          void main(){
+            vec3 vel = position - prevPosition;
+            vSpeed = clamp(length(vel)*6.0, 0.0, 1.0);
+            vPulse = sin(position.x*0.02 + position.y*0.02 + position.z*0.02);
+            vec4 mv = modelViewMatrix * vec4(position,1.0);
+            gl_PointSize = aSize * (220.0 / max(1.0, -mv.z)) * (1.0 + vSpeed*0.8);
+            gl_Position = projectionMatrix * mv;
+          }
+        `,
+        fragmentShader: `
+          uniform sampler2D uGlow;
+          uniform float uOpacity;
+          varying float vSpeed;
+          varying float vPulse;
+          void main(){
+            vec4 tex = texture2D(uGlow, gl_PointCoord);
+            float aura = 0.5 + 0.5*vPulse;
+            vec3 c1 = vec3(0.42, 0.88, 1.0);
+            vec3 c2 = vec3(0.70, 0.53, 1.0);
+            vec3 color = mix(c1, c2, clamp(vSpeed + aura*0.3, 0.0, 1.0));
+            gl_FragColor = vec4(color, tex.a * (0.35 + vSpeed*0.7) * uOpacity);
+          }
+        `
+      });
+
+      const points = new THREE.Points(geom, mat);
+      scene.add(points);
+
+      // --- Shape Library ---
+      const shapeLibrary = {};
+      const r = () => Math.random();
+      const TAU = Math.PI * 2;
+
+      function fillBy(count, fn) { const a = new Float32Array(count*3); for(let i=0;i<count;i++){const p=fn(i,count);a[i*3]=p[0];a[i*3+1]=p[1];a[i*3+2]=p[2];} return a; }
+      const jitter = (v,m=2)=>v+(Math.random()-0.5)*m;
+
+      function generateStarfield(c){ return fillBy(c,()=>{ const R=220*Math.cbrt(r()); const t=r()*TAU,p=Math.acos(2*r()-1); return [R*Math.sin(p)*Math.cos(t),R*Math.sin(p)*Math.sin(t),R*Math.cos(p)];});}
+      function generateSphere(c){ return fillBy(c,()=>{ const R=110; const u=r(),v=r(); const t=TAU*u,p=Math.acos(2*v-1); return [R*Math.sin(p)*Math.cos(t),R*Math.sin(p)*Math.sin(t),R*Math.cos(p)];});}
+      function generateCube(c){ return fillBy(c,()=>[(r()-.5)*190,(r()-.5)*190,(r()-.5)*190]);}
+      function generateTorus(c){ return fillBy(c,()=>{const R=90,r0=33; const u=r()*TAU,v=r()*TAU; return [(R+r0*Math.cos(v))*Math.cos(u),(R+r0*Math.cos(v))*Math.sin(u),r0*Math.sin(v)*2.2];});}
+      function generateVortex(c){ return fillBy(c,(i)=>{const t=i/c*TAU*20; const rad=10+i/c*120; return [Math.cos(t)*rad, (i/c-.5)*220, Math.sin(t)*rad];});}
+      function generateSpiral(c){ return fillBy(c,(i)=>{const t=i/c*TAU*52; const rr=8+i/c*130; return [Math.cos(t)*rr,Math.sin(t)*rr,(i/c-.5)*180];});}
+      function generateNova(c){ return fillBy(c,()=>{const d=Math.pow(r(),0.22)*170; const t=r()*TAU,p=Math.acos(2*r()-1); return [d*Math.sin(p)*Math.cos(t),d*Math.sin(p)*Math.sin(t),d*Math.cos(p)];});}
+      function generatePillar(c){ return fillBy(c,()=>{const a=r()*TAU;const rad=20+r()*35;return [Math.cos(a)*rad,(r()-.5)*260,Math.sin(a)*rad];});}
+      function generateWireframe(c){ return fillBy(c,()=>{const s=110; const edge=Math.floor(r()*12); const t=(r()-.5)*2*s; const v=(r()>.5?s:-s); const q=(r()>.5?s:-s); if(edge<4)return [t,v,q]; if(edge<8)return [v,t,q]; return [v,q,t];});}
+      function generateTerrain(c){ return fillBy(c,()=>{const x=(r()-.5)*220,z=(r()-.5)*220; const y=Math.sin(x*0.06)*22+Math.cos(z*0.06)*22 + (r()-.5)*7; return [x,y,z];});}
+      function generateFace(c){ return fillBy(c,()=>{const u=r()*TAU,v=r()*Math.PI; const rx=70,ry=95,rz=65; let x=rx*Math.sin(v)*Math.cos(u),y=ry*Math.cos(v),z=rz*Math.sin(v)*Math.sin(u); const eye=((Math.abs(x)-24)**2 + (y-20)**2 < 80)? -22:0; z+=eye; if(y<-30) z += Math.sin(x*0.12)*8; return [x,y,z];});}
+
+      function simpleAnimal(scale=1, wiggle=1){ return fillBy(count,(i)=>{ const t=i/count*TAU*6; return [Math.cos(t)*scale*70 + Math.sin(t*0.5)*20*wiggle, Math.sin(t*2)*scale*22, (i/count-.5)*scale*240 + Math.cos(t*1.3)*18];}); }
+      const creature = {
+        fish: ()=>simpleAnimal(1,1.2), bird: ()=>simpleAnimal(.85,1), eagle: ()=>simpleAnimal(1.1,1.4), flock: ()=>fillBy(count,()=>[(r()-.5)*260,Math.sin(r()*TAU*4)*65,(r()-.5)*220]),
+        butterfly: ()=>fillBy(count,()=>{const t=r()*TAU; const rad=60*Math.sin(2*t); return [rad*Math.cos(t),rad*Math.sin(t), (r()-.5)*90];}),
+        swarm: ()=>fillBy(count,()=>{const t=r()*TAU; const rad=20+r()*160; return [Math.cos(t)*rad,Math.sin(t)*rad,(r()-.5)*180];}),
+        wolf: ()=>simpleAnimal(1.25,.7), horse: ()=>simpleAnimal(1.35,.8), snake: ()=>fillBy(count,(i)=>{const t=i/count*TAU*14; return [Math.sin(t)*75, Math.cos(t*0.5)*20, (i/count-.5)*280];}),
+        dragon: ()=>fillBy(count,(i)=>{const t=i/count*TAU*16; const rr=40+i/count*100; return [Math.cos(t)*rr, Math.sin(t*2.5)*26, Math.sin(t)*rr];}),
+        octopus: ()=>fillBy(count,()=>{const a=r()*TAU; const arm=Math.floor(r()*8); const len=Math.pow(r(),.6)*140; const armA=a*0.2+arm*TAU/8; return [Math.cos(armA)*len, Math.sin(a*3)*18, Math.sin(armA)*len];}),
+        whale: ()=>fillBy(count,()=>{const t=r()*TAU;const u=r();const L=130;return [Math.cos(t)*L*(1-u*u*0.7),Math.sin(t)*35*(1-u), (u-.5)*250];})
+      };
+      const element = {
+        fire: ()=>fillBy(count,()=>{const t=r()*TAU; const y=Math.pow(r(),0.4)*220-110; const rr=(1-y/220)*(10+r()*40); return [Math.cos(t)*rr,y,Math.sin(t)*rr];}),
+        water: ()=>fillBy(count,()=>{const x=(r()-.5)*220,z=(r()-.5)*220,y=Math.sin(x*0.08+performance.now()*0.0007)*12+Math.cos(z*0.08)*12; return [x,y,z];}),
+        air: ()=>fillBy(count,()=>{const t=r()*TAU; const rr=30+r()*170; return [Math.cos(t)*rr,Math.sin(t*3)*35,Math.sin(t)*rr];}),
+        liquid: ()=>fillBy(count,()=>{const t=r()*TAU,p=r()*Math.PI; const R=70+Math.sin(t*3)*25; return [R*Math.sin(p)*Math.cos(t),R*Math.cos(p),R*Math.sin(p)*Math.sin(t)];}),
+        orb: ()=>generateSphere(count),
+        chaos: ()=>fillBy(count,()=>[jitter(0,260),jitter(0,260),jitter(0,260)])
+      };
+
+      Object.assign(shapeLibrary, {
+        stars: ()=>generateStarfield(count), sphere: ()=>generateSphere(count), cube: ()=>generateCube(count), torus: ()=>generateTorus(count),
+        vortex: ()=>generateVortex(count), spiral: ()=>generateSpiral(count), nova: ()=>generateNova(count), pillar: ()=>generatePillar(count),
+        wireframe: ()=>generateWireframe(count), terrain: ()=>generateTerrain(count), face: ()=>generateFace(count),
+        ...creature, ...element
+      });
+
+      const shapeNames = Object.keys(shapeLibrary);
+      let currentShape = 'stars';
+
+      function morphTo(name) {
+        if (!shapeLibrary[name]) return;
+        currentShape = name;
+        targetPositions.set(shapeLibrary[name]());
+        motionMemory[name] = (motionMemory[name] || 0) + 1;
+        save(STORE_KEYS.MOTION, motionMemory);
+        writeVault('morph', `Morphed to ${name}.`);
+      }
+
+      function dreamyAutopilot() {
+        const now = performance.now();
+        if (now - lastInteraction > (12000 + Math.random()*13000)) {
+          const weighted = shapeNames.slice().sort((a,b)=>(motionMemory[b]||0)-(motionMemory[a]||0));
+          const candidate = (Math.random()<0.6 && weighted[0]) ? weighted[Math.floor(Math.random()*Math.min(6,weighted.length))] : shapeNames[Math.floor(Math.random()*shapeNames.length)];
+          morphTo(candidate);
+          setEmotion('DREAMING');
+          lastInteraction = now;
+        }
+      }
+
+      // --- UI systems ---
+      const tabs = ['all','whisper','knowledge','reflection','morph','void','integrations','tasks'];
+      let activeTab = 'all';
+      const vaultTabs = document.getElementById('vaultTabs');
+      const vaultList = document.getElementById('vaultList');
+
+      tabs.forEach(t => {
+        const b = document.createElement('button'); b.textContent = t;
+        if (t===activeTab) b.classList.add('active');
+        b.onclick = ()=>{ activeTab=t; renderTabs(); renderVault(); };
+        vaultTabs.appendChild(b);
+      });
+
+      function renderTabs(){ [...vaultTabs.children].forEach(el=>el.classList.toggle('active',el.textContent===activeTab)); }
+      function writeVault(type, text){ vault.unshift({type,text,ts:Date.now()}); if(vault.length>500) vault.pop(); save(STORE_KEYS.VAULT,vault); renderVault(); }
+      function renderVault(){
+        const list = vault.filter(v=>activeTab==='all'||v.type===activeTab).slice(0,140);
+        vaultList.innerHTML = list.map(v=>`<div class="vault-entry"><small>${new Date(v.ts).toLocaleTimeString()}</small><div>${v.text}</div></div>`).join('');
+      }
+      renderVault();
+
+      const strip = document.getElementById('workflowStrip');
+      function renderStrip(){
+        const favorites = Object.entries(motionMemory).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([k])=>k);
+        const chips = ['workflow learning', ...favorites.map(f=>`loves ${f}`), 'context: living', 'autonomous dreaming'];
+        strip.innerHTML = chips.map(c=>`<span class="chip">${c}</span>`).join('');
+      }
+      renderStrip();
+
+      function setEmotion(label){ document.getElementById('emotion').textContent = `EMOTION: ${label}`; }
+      setInterval(()=>setEmotion(emotionWords[Math.floor(Math.random()*emotionWords.length)]), 9000);
+
+      // overlays
+      const openOverlay = (id)=>document.getElementById(id).classList.add('open');
+      const closeAll = ()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open'));
+      document.getElementById('dTasks').onclick = ()=>{renderTasks(); openOverlay('tasksOverlay');};
+      document.getElementById('dProfile').onclick = ()=>{renderProfile(); openOverlay('profileOverlay');};
+      document.getElementById('dMemorae').onclick = ()=>{renderMemorae(); openOverlay('memoraeOverlay');};
+      document.getElementById('dLab').onclick = ()=>{renderLab(); openOverlay('labOverlay');};
+      document.querySelectorAll('.overlay').forEach(o=>o.onclick=(e)=>{if(e.target===o) closeAll();});
+
+      function renderTasks(){
+        document.getElementById('tasksGrid').innerHTML = tasks.map((t,i)=>{
+          const color=t.priority==='high'?'var(--task-high)':t.priority==='mid'?'var(--task-mid)':'var(--task-low)';
+          return `<div class="task-card"><div style="font-size:11px;color:${color};text-transform:uppercase">${t.priority}</div><div>${t.title}</div><button data-i="${i}" style="margin-top:8px">Morph</button></div>`;
+        }).join('');
+        document.querySelectorAll('#tasksGrid button').forEach(b=>b.onclick=()=>morphTo(shapeNames[+b.dataset.i % shapeNames.length]));
+      }
+      function renderProfile(){
+        const favorite = Object.entries(motionMemory).sort((a,b)=>b[1]-a[1])[0]?.[0] || 'stars';
+        document.getElementById('profileCard').innerHTML = `<h2>VOID / USER</h2><p>Personality badge: <b>Poetic Navigator</b></p><p>Most loved form: <b>${favorite}</b></p><p>Particles: ${count.toLocaleString()}</p>`;
+      }
+      function renderMemorae(){
+        document.getElementById('memoraeStack').innerHTML = memorae.slice(0,60).map(m=>`<div class="polaroid"><small>${new Date(m.ts).toLocaleString()}</small><div>${m.note}</div></div>`).join('') || '<div class="polaroid">No memory shards yet.</div>';
+      }
+      function renderLab(){
+        document.getElementById('labCard').innerHTML = `
+          <label>Morph speed <input id="morphSpeed" type="range" min="0.005" max="0.12" step="0.001" value="${CONFIG.MORPH_SPEED}"></label><br><br>
+          <label>Rotation speed <input id="rotSpeed" type="range" min="0" max="0.02" step="0.0005" value="${CONFIG.ROTATION_SPEED}"></label>
+          <p style="opacity:.7">Supabase learning hooks & Alibaba Cloud comment stream are mounted but dormant.</p>
+        `;
+        document.getElementById('morphSpeed').oninput = e=>CONFIG.MORPH_SPEED = +e.target.value;
+        document.getElementById('rotSpeed').oninput = e=>CONFIG.ROTATION_SPEED = +e.target.value;
+      }
+
+      // --- Glass cards parser [[CARD:...]] ---
+      function parseCards(text){
+        const layer = document.getElementById('cardsLayer');
+        const hits = [...text.matchAll(/\[\[CARD:(.*?)\]\]/gs)].map(m=>m[1].trim());
+        hits.forEach(h=>{
+          const card = document.createElement('article');
+          card.className = 'glass-card';
+          card.innerHTML = `<small>structured</small><div>${h}</div><textarea placeholder="teach me..."></textarea>`;
+          const ta = card.querySelector('textarea');
+          ta.onchange = ()=>{
+            const ts=Date.now();
+            memorae.unshift({ts,note:`${h} :: ${ta.value}`});
+            memorae.splice(100);
+            save(STORE_KEYS.MEMORAE,memorae);
+            // 5-day absorption window marker
+            writeVault('reflection', `Absorbed comment into 5-day learning window.`);
+          };
+          layer.prepend(card);
+        });
+      }
+
+      // --- AI dynamic shape generation ---
+      async function callModel(promptText){
+        const apiKey = window.GROQ_API_KEY || window.MISTRAL_API_KEY || window.QWEN_API_KEY || '';
+        if(!apiKey) throw new Error('No API key in window.GROQ_API_KEY / MISTRAL / QWEN');
+
+        const endpoints = [
+          {url:'https://api.groq.com/openai/v1/chat/completions', model:'llama-3.3-70b-versatile', auth:'Bearer '},
+          {url:'https://api.mistral.ai/v1/chat/completions', model:'mistral-large-latest', auth:'Bearer '},
+          {url:'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', model:'qwen-plus', auth:'Bearer '}
+        ];
+
+        const system = `You output ONLY raw JavaScript code for: (count)=>Float32Array(count*3). No markdown, no backticks, no prose. Generate a mathematically coherent 3D shape from user intent.`;
+        for (const ep of endpoints) {
+          try {
+            const res = await fetch(ep.url,{method:'POST',headers:{'Content-Type':'application/json','Authorization':ep.auth+apiKey},body:JSON.stringify({model:ep.model,messages:[{role:'system',content:system},{role:'user',content:promptText}],temperature:.5})});
+            if(!res.ok) continue;
+            const j = await res.json();
+            const code = j.choices?.[0]?.message?.content?.trim();
+            if(code) return code;
+          } catch(_){}
+        }
+        throw new Error('AI backend unavailable');
+      }
+
+      async function generateShapeFromText(text){
+        try {
+          writeVault('whisper', `Asked the void: ${text}`);
+          const js = await callModel(text);
+          const fn = new Function(`return (${js});`)();
+          const arr = fn(count);
+          if(!(arr instanceof Float32Array) || arr.length!==count*3) throw new Error('Invalid shape payload');
+          const key = text.toLowerCase().replace(/[^a-z0-9]+/g,'_').slice(0,40) || ('shape_'+Date.now());
+          shapeLibrary[key] = ()=>arr;
+          if(!shapeNames.includes(key)) shapeNames.push(key);
+          morphTo(key);
+          parseCards(`[[CARD:New shape '${key}' grown from intent.]]`);
+        } catch (e) {
+          writeVault('void', `AI shape generation failed: ${e.message}`);
+        }
+      }
+
+      // --- File and drive intelligence ---
+      const dropZone = document.getElementById('dropZone');
+      const fileInput = document.getElementById('fileInput');
+
+      document.getElementById('attach').onclick = ()=>fileInput.click();
+      fileInput.onchange = e=>handleFiles([...e.target.files]);
+
+      ['dragenter','dragover'].forEach(ev=>addEventListener(ev,e=>{e.preventDefault();dropZone.classList.add('active');}));
+      ['dragleave','drop'].forEach(ev=>addEventListener(ev,e=>{e.preventDefault();dropZone.classList.remove('active');}));
+      addEventListener('drop', e=>{ const files=[...e.dataTransfer.files]; if(files.length) handleFiles(files); });
+
+      async function handleFiles(files){
+        if (!files.length) return;
+        navigator.vibrate?.(35);
+        writeVault('knowledge', `Consumed ${files.length} file(s) into the mind.`);
+        for (const f of files) {
+          const t = f.type.toLowerCase();
+          if (t.includes('pdf')) await absorbPDF(f);
+          else if (t.includes('sheet') || f.name.endsWith('.csv') || f.name.endsWith('.xlsx')) await absorbSheet(f);
+          else if (t.startsWith('image/')) await absorbImage(f);
+          else if (t.startsWith('audio/')) await absorbAudio(f);
+          else writeVault('knowledge', `Stored file: ${f.name}`);
+        }
+        morphTo('chaos');
+      }
+
+      async function absorbPDF(file){
+        const buf = await file.arrayBuffer();
+        const doc = await pdfjsLib.getDocument({data:buf}).promise;
+        writeVault('knowledge', `PDF ${file.name}: ${doc.numPages} pages absorbed.`);
+      }
+      async function absorbSheet(file){
+        const data = await file.arrayBuffer();
+        const wb = XLSX.read(data,{type:'array'});
+        writeVault('knowledge', `Sheet ${file.name}: ${wb.SheetNames.length} tabs mapped.`);
+      }
+      async function absorbImage(file){
+        writeVault('integrations', `Pixtral vision queued for ${file.name}.`);
+      }
+      async function absorbAudio(file){
+        writeVault('integrations', `Groq Whisper queued for ${file.name}.`);
+      }
+
+      // Google Drive placeholder integration
+      document.getElementById('drive').onclick = ()=>{
+        writeVault('integrations','Google Drive OAuth initialized (placeholder). Folder navigation + direct absorption ready for backend wiring.');
+        parseCards('[[CARD:Drive portal opened. Select a folder to infuse shape memory.]]');
+      };
+
+      // composer actions
+      document.getElementById('send').onclick = ()=>{
+        const input = document.getElementById('prompt');
+        const text = input.value.trim();
+        if(!text) return;
+        lastInteraction = performance.now();
+        if(shapeLibrary[text]) morphTo(text); else generateShapeFromText(text);
+        input.value='';
+      };
+      document.getElementById('mic').onclick = ()=>writeVault('whisper','Microphone ritual invoked (speech pipeline hook ready).');
+      document.getElementById('liquidTrigger').onclick = ()=>morphTo(shapeNames[Math.floor(Math.random()*shapeNames.length)]);
+
+      // backend-ready anchors
+      const SUPABASE_URL = window.SUPABASE_URL || '';
+      const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || '';
+      const ALIBABA_SHAPE_COMMENT_ENDPOINT = window.ALIBABA_SHAPE_COMMENT_ENDPOINT || '';
+      void {SUPABASE_URL, SUPABASE_ANON_KEY, ALIBABA_SHAPE_COMMENT_ENDPOINT};
+
+      // --- Animate ---
+      const posAttr = geom.getAttribute('position');
+      const prevAttr = geom.getAttribute('prevPosition');
+      let t = 0;
+
+      function tick(){
+        requestAnimationFrame(tick);
+        t += 0.016;
+        mat.uniforms.uTime.value = t;
+
+        dreamyAutopilot();
+
+        for(let i=0;i<positions.length;i+=3){
+          prevPositions[i]=positions[i]; prevPositions[i+1]=positions[i+1]; prevPositions[i+2]=positions[i+2];
+          positions[i] += (targetPositions[i]-positions[i]) * CONFIG.MORPH_SPEED;
+          positions[i+1] += (targetPositions[i+1]-positions[i+1]) * CONFIG.MORPH_SPEED;
+          positions[i+2] += (targetPositions[i+2]-positions[i+2]) * CONFIG.MORPH_SPEED;
+        }
+
+        posAttr.needsUpdate = true;
+        prevAttr.needsUpdate = true;
+
+        points.rotation.y += CONFIG.ROTATION_SPEED;
+        points.rotation.x = Math.sin(t*0.07)*0.14;
+
+        renderer.render(scene, camera);
+      }
+      tick();
+
+      addEventListener('resize', ()=>{
+        camera.aspect = innerWidth/innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(innerWidth, innerHeight);
+      });
+
+      // boot ritual
+      writeVault('void', `The organism is awake with ${count.toLocaleString()} particles.`);
+      parseCards('[[CARD:The Void is listening.]]');
+      morphTo('nova');
+    })();
+  </script>
+</body>
+</html>
