@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!--
+  VOID README
+
+  WHAT IS THE VOID?
+  The Void is a minimalist glass AI interface inhabited by Aether.
+  It blends subtle particle ambience, structured glass cards, and a teachable memory core.
+
+  CORE IDEA
+  Keep interaction calm, monochrome, and alive: conversation in the center, intelligent cards at the edge,
+  persistent rule absorption beneath every response.
+
+  SYSTEM OVERVIEW
+  - Particle Canvas: lightweight connected-particle WebGL background.
+  - Conversation Core: Aether chat stream with emotion state transitions.
+  - Glass Card Overlay: parses [[CARD:type|title|body|stat|statLabel|detail]].
+  - Teaching Engine: detects teaching intent + absorbs card comments for 5 days.
+  - Vault Memory: local persistent rules and memories with filter tabs.
+  - Provider Routing: Worker endpoint (Qwen primary, Groq/Mistral fallback) ready.
+
+  OFFLINE FIRST
+  localStorage stores conversation shards, cards, rules, and emotion continuity.
+
+  BACKEND READY
+  Supabase memory sync hooks and Alibaba/Qwen-compatible routing anchors are included.
+  -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VOID — A Living Particle Interface</title>
+  <style>
+    :root {
+      --font-primary: 'Inter', system-ui, -apple-system, sans-serif;
+      --color-bg: #000;
+      --color-fg: #fff;
+      --color-muted: rgba(255,255,255,.62);
+      --color-glass-bg: rgba(255,255,255,.04);
+      --color-glass-border: rgba(255,255,255,.14);
+      --blur-amount: 40px;
+      --shadow: 0 24px 60px rgba(0,0,0,.45);
+      --radius: 18px;
+      --z-canvas: 1;
+      --z-ui: 5;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--color-bg);
+      color: var(--color-fg);
+      font-family: var(--font-primary);
+    }
+
+    #particleCanvas {
+      position: fixed;
+      inset: 0;
+      z-index: var(--z-canvas);
+      filter: contrast(1.04) brightness(.96);
+    }
+
+    .vignette {
+      position: fixed;
+      inset: 0;
+      z-index: calc(var(--z-canvas) + 1);
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 50%, rgba(0,0,0,.2), rgba(0,0,0,.72) 70%, rgba(0,0,0,.92));
+    }
+
+    .glass {
+      background: var(--color-glass-bg);
+      border: 1px solid var(--color-glass-border);
+      backdrop-filter: blur(var(--blur-amount)) saturate(120%);
+      -webkit-backdrop-filter: blur(var(--blur-amount)) saturate(120%);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+    }
+
+    #layout {
+      position: fixed;
+      inset: 12px;
+      display: grid;
+      grid-template-columns: 300px 1fr 360px;
+      gap: 12px;
+      z-index: var(--z-ui);
+    }
+
+    .panel {
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    #vaultPanel {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      padding: 12px;
+      gap: 10px;
+    }
+
+    .muted { color: var(--color-muted); }
+    .tiny { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+
+    #vaultTabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    #vaultTabs button {
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      color: var(--color-muted);
+      border-radius: 999px;
+      font-size: 10px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 5px 9px;
+      cursor: pointer;
+    }
+    #vaultTabs button.active { color: #fff; background: rgba(255,255,255,.11); }
+
+    #vaultList { overflow: auto; padding-right: 4px; }
+    .vaultEntry { padding: 8px 6px; border-bottom: 1px solid rgba(255,255,255,.08); font-size: 12px; line-height: 1.4; }
+
+    #chatPanel {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      padding: 12px;
+      gap: 10px;
+    }
+
+    #headerRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    #emotionBadge {
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 10px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      background: rgba(255,255,255,.04);
+    }
+
+    #messages {
+      overflow: auto;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      padding-right: 4px;
+    }
+
+    .msg {
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.03);
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+    .msg.user { border-color: rgba(255,255,255,.2); }
+
+    #composer {
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      padding: 8px;
+    }
+
+    #input {
+      background: transparent;
+      border: 0;
+      outline: 0;
+      color: #fff;
+      padding: 8px 10px;
+      font-size: 14px;
+      font-family: var(--font-primary);
+    }
+
+    .btn {
+      border: 1px solid rgba(255,255,255,.2);
+      background: rgba(255,255,255,.06);
+      color: #fff;
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    #cardsPanel {
+      padding: 12px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 10px;
+    }
+
+    #cardsList {
+      overflow: auto;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      padding-right: 4px;
+    }
+
+    .card {
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      border-radius: 16px;
+      padding: 10px;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .cardTop { display:flex; justify-content:space-between; gap:8px; align-items:flex-start; }
+    .cardType { font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--color-muted); }
+    .cardTitle { font-size:13px; margin:4px 0; }
+    .cardStat { font-size:22px; margin:6px 0 0; }
+
+    .cardActions { display:flex; gap:6px; margin-top:8px; }
+    .xbtn {
+      border:1px solid rgba(255,255,255,.2);
+      border-radius:999px;
+      width:22px;height:22px;display:grid;place-items:center;
+      background:rgba(255,255,255,.05);
+      cursor:pointer;font-size:12px;
+    }
+
+    .commentArea { width:100%; margin-top:8px; }
+    .commentArea textarea {
+      width:100%; min-height:52px; resize:vertical; border-radius:10px;
+      background: rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.16);
+      color:#fff; padding:8px; font-family:var(--font-primary); font-size:12px;
+    }
+
+    @media (max-width: 1120px) {
+      #layout { grid-template-columns: 260px 1fr; }
+      #cardsPanel { position: fixed; right: 12px; top: 12px; bottom: 12px; width: min(360px, calc(100vw - 24px)); }
+    }
+
+    @media (max-width: 768px) {
+      #layout { grid-template-columns: 1fr; grid-template-rows: minmax(180px,28vh) 1fr; }
+      #vaultPanel { display: none; }
+      #cardsPanel { display:none; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="particleCanvas"></canvas>
+  <div class="vignette"></div>
+
+  <main id="layout">
+    <aside id="vaultPanel" class="glass panel">
+      <div>
+        <div class="tiny">Vault</div>
+        <div class="muted" style="font-size:12px">Persistent memory • rule absorption</div>
+      </div>
+      <div id="vaultTabs"></div>
+      <div id="vaultList"></div>
+    </aside>
+
+    <section id="chatPanel" class="glass panel">
+      <div id="headerRow">
+        <div>
+          <div class="tiny">Aether</div>
+          <div class="muted" style="font-size:12px">Monochrome learning interface</div>
+        </div>
+        <div id="emotionBadge">present</div>
+      </div>
+      <div id="messages"></div>
+      <div id="composer">
+        <input id="input" placeholder="Speak into the void..." />
+        <button id="sendBtn" class="btn">send</button>
+      </div>
+    </section>
+
+    <aside id="cardsPanel" class="glass panel">
+      <div>
+        <div class="tiny">Glass Card Overlay</div>
+        <div class="muted" style="font-size:12px">Click to expand, comment to teach</div>
+      </div>
+      <div id="cardsList"></div>
+    </aside>
+  </main>
+
+  <script>
+    (() => {
+      const STORAGE = {
+        messages: 'void.messages.v2',
+        cards: 'void.cards.v2',
+        rules: 'void.rules.v2',
+        vault: 'void.vault.v2'
+      };
+
+      const now = () => Date.now();
+      const day = 86400000;
+      const safeLoad = (k, fallback) => { try { return JSON.parse(localStorage.getItem(k)) ?? fallback; } catch { return fallback; } };
+      const safeSave = (k, data) => localStorage.setItem(k, JSON.stringify(data));
+
+      const state = {
+        messages: safeLoad(STORAGE.messages, []),
+        cards: safeLoad(STORAGE.cards, []),
+        rules: safeLoad(STORAGE.rules, []),
+        vault: safeLoad(STORAGE.vault, []),
+        activeVaultTab: 'all',
+        emotion: 'present'
+      };
+
+      const els = {
+        input: document.getElementById('input'),
+        send: document.getElementById('sendBtn'),
+        messages: document.getElementById('messages'),
+        cards: document.getElementById('cardsList'),
+        emotion: document.getElementById('emotionBadge'),
+        vaultTabs: document.getElementById('vaultTabs'),
+        vaultList: document.getElementById('vaultList')
+      };
+
+      function setEmotion(label) {
+        state.emotion = label;
+        els.emotion.textContent = label;
+      }
+
+      function pushVault(type, text) {
+        state.vault.unshift({ id: crypto.randomUUID(), type, text, ts: now() });
+        state.vault = state.vault.slice(0, 600);
+        safeSave(STORAGE.vault, state.vault);
+        renderVault();
+      }
+
+      function addMessage(role, content) {
+        state.messages.push({ id: crypto.randomUUID(), role, content, ts: now() });
+        state.messages = state.messages.slice(-300);
+        safeSave(STORAGE.messages, state.messages);
+        renderMessages();
+      }
+
+      function renderMessages() {
+        els.messages.innerHTML = state.messages.map(m => `<div class="msg ${m.role==='user'?'user':''}">${escapeHtml(m.content)}</div>`).join('');
+        els.messages.scrollTop = els.messages.scrollHeight;
+      }
+
+      function tabs() { return ['all','whisper','knowledge','reflection','morph','void','integrations','tasks']; }
+
+      function renderVaultTabs() {
+        els.vaultTabs.innerHTML = tabs().map(t => `<button class="${state.activeVaultTab===t?'active':''}" data-tab="${t}">${t}</button>`).join('');
+        [...els.vaultTabs.querySelectorAll('button')].forEach(b => b.onclick = () => { state.activeVaultTab = b.dataset.tab; renderVaultTabs(); renderVault(); });
+      }
+
+      function renderVault() {
+        const list = state.vault.filter(v => state.activeVaultTab === 'all' || v.type === state.activeVaultTab).slice(0, 180);
+        els.vaultList.innerHTML = list.map(v => `<div class="vaultEntry"><div class="tiny muted">${new Date(v.ts).toLocaleString()}</div><div>${escapeHtml(v.text)}</div></div>`).join('');
+      }
+
+      function saveCards() { safeSave(STORAGE.cards, state.cards); }
+      function saveRules() { safeSave(STORAGE.rules, state.rules); }
+
+      function cardIsCommentable(card) { return now() - card.createdAt <= 5 * day; }
+
+      function renderCards() {
+        const visible = state.cards.filter(c => !c.dismissed);
+        els.cards.innerHTML = visible.map(card => {
+          const commentable = cardIsCommentable(card);
+          const detailOpen = card.expanded ? `<div class="muted" style="margin-top:8px">${escapeHtml(card.detail || '')}</div>` : '';
+          return `
+            <article class="card" data-id="${card.id}">
+              <div class="cardTop">
+                <div>
+                  <div class="cardType">${escapeHtml(card.type)}</div>
+                  <div class="cardTitle">${escapeHtml(card.title)}</div>
+                </div>
+                <button class="xbtn" data-action="dismiss">×</button>
+              </div>
+              <div>${escapeHtml(card.body || '')}</div>
+              ${card.stat ? `<div class="cardStat">${escapeHtml(card.stat)}</div><div class="muted">${escapeHtml(card.statLabel || '')}</div>` : ''}
+              ${detailOpen}
+              <div class="cardActions">
+                <button class="btn" data-action="expand">${card.expanded ? 'collapse' : 'expand'}</button>
+              </div>
+              ${commentable ? `
+                <div class="commentArea">
+                  <textarea maxlength="500" placeholder="Teach Aether from this card..."></textarea>
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+                    <span class="tiny muted">5-day window</span>
+                    <button class="btn" data-action="absorb">absorb</button>
+                  </div>
+                </div>
+              ` : `<div class="tiny muted" style="margin-top:8px">comment window expired</div>`}
+            </article>
+          `;
+        }).join('');
+
+        [...els.cards.querySelectorAll('.card')].forEach(el => {
+          const id = el.dataset.id;
+          const card = state.cards.find(c => c.id === id);
+          el.querySelector('[data-action="dismiss"]').onclick = () => {
+            card.dismissed = true;
+            saveCards();
+            renderCards();
+            pushVault('tasks', `Dismissed card: ${card.title}`);
+          };
+          el.querySelector('[data-action="expand"]').onclick = () => {
+            card.expanded = !card.expanded;
+            saveCards();
+            renderCards();
+          };
+          const absorbBtn = el.querySelector('[data-action="absorb"]');
+          if (absorbBtn) {
+            absorbBtn.onclick = () => {
+              const text = el.querySelector('textarea').value.trim();
+              if (!text) return;
+              absorbRule(text, 'card_comment');
+              el.querySelector('textarea').value = '';
+              setEmotion('absorbing');
+            };
+          }
+        });
+      }
+
+      function addCardsFromText(text) {
+        const marker = /\[\[CARD:([^\]|]+)\|([^\]|]*)\|([^\]|]*)\|([^\]|]*)\|([^\]|]*)\|([^\]]*)\]\]/g;
+        const found = [...text.matchAll(marker)].map(m => ({
+          id: crypto.randomUUID(),
+          type: (m[1] || 'insight').trim().toLowerCase(),
+          title: (m[2] || 'Untitled').trim(),
+          body: (m[3] || '').trim(),
+          stat: (m[4] || '').trim(),
+          statLabel: (m[5] || '').trim(),
+          detail: (m[6] || '').trim(),
+          createdAt: now(),
+          expanded: false,
+          dismissed: false
+        }));
+
+        if (!found.length) return;
+        state.cards.unshift(...found);
+        state.cards = state.cards.slice(0, 200);
+        saveCards();
+        renderCards();
+
+        found.forEach(c => {
+          setEmotion(getEmotionForCardType(c.type));
+          pushVault('knowledge', `Card surfaced: ${c.type} • ${c.title}`);
+          setTimeout(() => {
+            if (!c.expanded && !c.dismissed) {
+              c.dismissed = true;
+              saveCards();
+              renderCards();
+            }
+          }, 60000);
+        });
+      }
+
+      function getEmotionForCardType(type) {
+        const map = {
+          stat: 'aware',
+          data: 'observing',
+          tasks: 'thinking',
+          insight: 'present',
+          result: 'aware',
+          warning: 'observing'
+        };
+        return map[type] || 'present';
+      }
+
+      function detectTeachingIntent(text) {
+        const patterns = [
+          /\balways\b/i,
+          /\bnever\b/i,
+          /\brule\s*:/i,
+          /\bprotocol\s*:/i,
+          /\bfrom now on\b/i,
+          /\bremember that\b/i,
+          /\bwhen you see\b/i,
+          /\bthe correct way to\b/i,
+          /\bshould always\b/i,
+          /\bshould never\b/i,
+          /\bdefault to\b/i,
+          /\bmap\s+.+\s+to\s+.+/i
+        ];
+        return patterns.some(p => p.test(text));
+      }
+
+      function absorbRule(text, source) {
+        state.rules.unshift({ id: crypto.randomUUID(), text, source, createdAt: now() });
+        state.rules = dedupeRules(state.rules).slice(0, 300);
+        saveRules();
+        pushVault('reflection', `Absorbed rule (${source}): ${text}`);
+      }
+
+      function dedupeRules(rules) {
+        const seen = new Set();
+        return rules.filter(r => {
+          const key = r.text.trim().toLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      }
+
+      function getAbsorbedRulesContext() {
+        if (!state.rules.length) return 'No absorbed rules yet.';
+        return state.rules.slice(0, 30).map((r, i) => `${i + 1}. ${r.text}`).join('\n');
+      }
+
+      async function inferWithAether(userText) {
+        setEmotion('thinking');
+        const system = [
+          'You are Aether: concise, monochrome, minimalist, no emojis.',
+          'If structured output is helpful, include card markers exactly:',
+          '[[CARD:type|title|body|stat|statLabel|detail]]',
+          'Allowed types: data, stat, tasks, insight, result, warning.',
+          'Keep prose calm and useful.',
+          'Absorbed rules:',
+          getAbsorbedRulesContext()
+        ].join('\n');
+
+        const payload = {
+          messages: [
+            { role: 'system', content: system },
+            ...state.messages.slice(-12).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content })),
+            { role: 'user', content: userText }
+          ]
+        };
+
+        const worker = window.VITE_WORKER_URL || window.WORKER_URL || '';
+        if (!worker) {
+          return `I am listening.\n\n[[CARD:insight|Local Mode|No worker URL configured. Running offline fallback.| | |Set window.VITE_WORKER_URL for live provider routing.]]`;
+        }
+
+        try {
+          const res = await fetch(worker, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (!res.ok) throw new Error(`Worker error ${res.status}`);
+          const data = await res.json();
+          return String(data.text || data.output || '').trim() || 'No response.';
+        } catch (e) {
+          pushVault('integrations', `Inference error: ${e.message}`);
+          return `Connection drift detected.\n\n[[CARD:warning|Inference Failed|Could not reach AI worker.|${e.name || 'Error'}|transport|${e.message}]]`;
+        }
+      }
+
+      async function handleSend() {
+        const text = els.input.value.trim();
+        if (!text) return;
+        els.input.value = '';
+
+        addMessage('user', text);
+        pushVault('whisper', text);
+
+        if (detectTeachingIntent(text)) {
+          absorbRule(text, 'user_message');
+          setEmotion('absorbing');
+        }
+
+        const reply = await inferWithAether(text);
+        addMessage('assistant', reply.replace(/\[\[CARD:[\s\S]*?\]\]/g, '').trim() || ' ');
+        addCardsFromText(reply);
+        setEmotion('present');
+      }
+
+      function escapeHtml(s) {
+        return String(s)
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;');
+      }
+
+      // Backend-ready placeholders
+      const SUPABASE_URL = window.SUPABASE_URL || '';
+      const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || '';
+      async function syncRulesToSupabase() {
+        if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
+        // reserved for server-authenticated sync path
+      }
+      void syncRulesToSupabase;
+
+      els.send.onclick = handleSend;
+      els.input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          handleSend();
+        }
+      });
+
+      // Initial UI hydrate
+      renderVaultTabs();
+      renderVault();
+      renderMessages();
+      renderCards();
+
+      if (!state.messages.length) {
+        addMessage('assistant', 'The interface is ready. Ask, teach, or observe.');
+        addCardsFromText('[[CARD:stat|Session Initialized|Aether is online in local mode.|1|active channel|Teach me rules directly in chat or through card comments.]]');
+      }
+
+      // Subtle particle network canvas
+      const c = document.getElementById('particleCanvas');
+      const gl = c.getContext('webgl', { alpha: true, antialias: false, powerPreference: 'high-performance' });
+      if (!gl) return;
+
+      const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || innerWidth < 768;
+      const PCOUNT = isMobile ? 320 : 700;
+      const MAX_LINK = isMobile ? 70 : 90;
+      const SPEED = isMobile ? 0.12 : 0.09;
+
+      const verts = new Float32Array(PCOUNT * 4); // x y vx vy in normalized coords
+      for (let i = 0; i < PCOUNT; i++) {
+        const j = i * 4;
+        verts[j] = (Math.random() * 2 - 1);
+        verts[j + 1] = (Math.random() * 2 - 1);
+        verts[j + 2] = (Math.random() * 2 - 1) * SPEED * 0.01;
+        verts[j + 3] = (Math.random() * 2 - 1) * SPEED * 0.01;
+      }
+
+      const vsh = `attribute vec2 aPos; uniform float uSize; void main(){ gl_Position=vec4(aPos,0.0,1.0); gl_PointSize=uSize; }`;
+      const fsh = `precision mediump float; void main(){ float d=distance(gl_PointCoord,vec2(0.5)); float a=smoothstep(0.5,0.0,d); gl_FragColor=vec4(1.0,1.0,1.0,a*0.35); }`;
+      const compile = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+      const prg = gl.createProgram();
+      gl.attachShader(prg, compile(gl.VERTEX_SHADER, vsh));
+      gl.attachShader(prg, compile(gl.FRAGMENT_SHADER, fsh));
+      gl.linkProgram(prg);
+      gl.useProgram(prg);
+
+      const aPos = gl.getAttribLocation(prg, 'aPos');
+      const uSize = gl.getUniformLocation(prg, 'uSize');
+      const buf = gl.createBuffer();
+
+      const lineCanvas = document.createElement('canvas');
+      const lineCtx = lineCanvas.getContext('2d');
+      lineCanvas.style.position = 'fixed';
+      lineCanvas.style.inset = '0';
+      lineCanvas.style.zIndex = '2';
+      lineCanvas.style.pointerEvents = 'none';
+      lineCanvas.style.opacity = '.28';
+      document.body.appendChild(lineCanvas);
+
+      function resize() {
+        const w = innerWidth, h = innerHeight;
+        c.width = w * devicePixelRatio; c.height = h * devicePixelRatio;
+        c.style.width = w + 'px'; c.style.height = h + 'px';
+        gl.viewport(0, 0, c.width, c.height);
+
+        lineCanvas.width = w;
+        lineCanvas.height = h;
+      }
+      resize();
+      addEventListener('resize', resize);
+
+      const drawPos = new Float32Array(PCOUNT * 2);
+      function frame() {
+        requestAnimationFrame(frame);
+
+        for (let i = 0; i < PCOUNT; i++) {
+          const j = i * 4;
+          verts[j] += verts[j + 2];
+          verts[j + 1] += verts[j + 3];
+          if (verts[j] < -1 || verts[j] > 1) verts[j + 2] *= -1;
+          if (verts[j + 1] < -1 || verts[j + 1] > 1) verts[j + 3] *= -1;
+          drawPos[i * 2] = verts[j];
+          drawPos[i * 2 + 1] = verts[j + 1];
+        }
+
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+        gl.bufferData(gl.ARRAY_BUFFER, drawPos, gl.DYNAMIC_DRAW);
+        gl.enableVertexAttribArray(aPos);
+        gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+        gl.uniform1f(uSize, isMobile ? 1.7 : 2.0);
+        gl.drawArrays(gl.POINTS, 0, PCOUNT);
+
+        // connected lines on 2d overlay
+        lineCtx.clearRect(0, 0, lineCanvas.width, lineCanvas.height);
+        for (let i = 0; i < PCOUNT; i++) {
+          const ix = (drawPos[i * 2] * .5 + .5) * lineCanvas.width;
+          const iy = (drawPos[i * 2 + 1] * -.5 + .5) * lineCanvas.height;
+          for (let j = i + 1; j < Math.min(PCOUNT, i + MAX_LINK); j++) {
+            const jx = (drawPos[j * 2] * .5 + .5) * lineCanvas.width;
+            const jy = (drawPos[j * 2 + 1] * -.5 + .5) * lineCanvas.height;
+            const dx = ix - jx, dy = iy - jy;
+            const d = Math.sqrt(dx * dx + dy * dy);
+            if (d < 58) {
+              const a = (1 - d / 58) * 0.18;
+              lineCtx.strokeStyle = `rgba(255,255,255,${a})`;
+              lineCtx.beginPath();
+              lineCtx.moveTo(ix, iy);
+              lineCtx.lineTo(jx, jy);
+              lineCtx.stroke();
+            }
+          }
+        }
+      }
+      frame();
+    })();
+  </script>
+</body>
+</html>
